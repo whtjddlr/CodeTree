@@ -23,6 +23,8 @@ HOLES = ((0.0, 0.0), (127.0, 0.0), (254.0, 0.0), (0.0, 127.0), (127.0, 127.0), (
 BALL_RADIUS = 2.865
 BLOCK_MARGIN = 0.35
 DEBUG = False
+EIGHT_BALL_INDEX = 8
+
 
 
 def dprint(*args):
@@ -108,13 +110,11 @@ def target_indices_from_order(order, balls_len):
     규칙상 목적구:
       order==1 -> [1,3,8]
       order==2 -> [2,4,8]
-    템플릿 공 개수가 6인 경우 8번공은 마지막 인덱스(통상 5)로 안전 매핑.
+    다만 템플릿이 6개 공 배열이면 인덱스 8이 존재하지 않으므로 마지막 공으로 폴백한다.
+    (런타임 충돌/인덱스 에러 방지 목적)
     """
-    eight_idx = 8 if balls_len > 8 else (balls_len - 1)
-    if order == 1:
-        base = [1, 3, eight_idx]
-    else:
-        base = [2, 4, eight_idx]
+    eight_idx = EIGHT_BALL_INDEX if balls_len > EIGHT_BALL_INDEX else (balls_len - 1)
+    base = [1, 3, eight_idx] if order == 1 else [2, 4, eight_idx]
 
     # 유효 범위 인덱스만 유지 + 중복 제거
     out = []
@@ -154,8 +154,9 @@ def best_shot(order, balls, pockets):
     if not is_valid_ball(cue):
         return None
 
+    target_pool = target_indices_from_order(order, len(balls))
     targets = []
-    for idx in target_indices_from_order(order, len(balls)):
+    for idx in target_pool:
         if idx == 0:
             continue
         if is_valid_ball(balls[idx]):
@@ -189,8 +190,8 @@ def best_shot(order, balls, pockets):
             score -= d_tp * 3.0
             score -= angle_penalty(cue, t, cp)
 
-            # 8번공은 상황상 리스크가 크므로 소폭 보수
-            if ti == target_indices_from_order(order, len(balls))[-1]:
+            # 8번공(또는 6개 배열 폴백 마지막 공)은 상황상 리스크가 크므로 소폭 보수
+            if target_pool and ti == target_pool[-1]:
                 score -= 30.0
 
             if score > best_score:
