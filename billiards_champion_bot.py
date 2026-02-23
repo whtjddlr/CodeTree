@@ -2,7 +2,7 @@ import math
 import socket
 
 # 닉네임만 바꿔서 사용하세요.
-NICKNAME = "DAEJEON02_PYTHON"
+NICKNAME = "서울 3반 한로로 조야"
 
 HOST = "127.0.0.1"
 PORT = 1447
